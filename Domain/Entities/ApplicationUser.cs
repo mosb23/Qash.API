@@ -13,9 +13,12 @@ public class ApplicationUser : BaseEntity
 
     public string PhoneNumber { get; set; } = string.Empty;
 
+    public bool IsPhoneNumberVerified { get; set; } = false;
+
     public string PasswordHash { get; set; } = string.Empty;
 
     public List<RefreshToken> RefreshTokens { get; set; } = [];
 
     public string FullName => $"{FirstName} {LastName}";
+
 }

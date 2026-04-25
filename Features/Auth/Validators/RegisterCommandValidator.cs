@@ -25,11 +25,6 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
             .Matches(@"^[0-9]{10,15}$")
             .WithMessage("Invalid phone number.");
 
-        RuleFor(x => x.VerificationCode)
-            .NotEmpty()
-            .Equal("00000")
-            .WithMessage("Invalid verification code.");
-
         RuleFor(x => x.Password)
             .NotEmpty()
             .MinimumLength(8)

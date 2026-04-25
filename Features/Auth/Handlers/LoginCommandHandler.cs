@@ -53,6 +53,13 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Aut
                 ["Invalid phone number or password."]);
         }
 
+        if (!user.IsPhoneNumberVerified)
+        {
+            return ApiResponse<AuthResponseDto>.FailResponse(
+                "Login failed.",
+                ["Phone number is not verified. Please verify your phone number first."]);
+        }
+
         await _context.RefreshTokens
             .Where(x =>
                 x.ApplicationUserId == user.Id &&

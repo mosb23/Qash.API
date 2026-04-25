@@ -19,11 +19,6 @@ public class UpdateProfileCommandValidator : AbstractValidator<UpdateProfileComm
             .NotEmpty()
             .Must(BeValidDemoEmail)
             .WithMessage("Email must contain @ and end with .com");
-
-        RuleFor(x => x.PhoneNumber)
-            .NotEmpty()
-            .Matches(@"^[0-9]{10,15}$")
-            .WithMessage("Invalid phone number.");
     }
 
     private bool BeValidDemoEmail(string email)

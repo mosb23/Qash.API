@@ -35,25 +35,20 @@ public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand,
         }
 
         var email = request.Email.Trim().ToLower();
-        var phone = request.PhoneNumber.Trim();
 
-        var duplicateExists = await _context.Users
-            .AnyAsync(x =>
-                x.Id != request.UserId &&
-                (x.Email == email || x.PhoneNumber == phone),
-                cancellationToken);
+        var emailExists = await _context.Users
+            .AnyAsync(x => x.Id != request.UserId && x.Email == email, cancellationToken);
 
-        if (duplicateExists)
+        if (emailExists)
         {
             return ApiResponse<ProfileDto>.FailResponse(
                 "Update profile failed.",
-                ["Email or phone number is already used by another account."]);
+                ["Email is already used by another account."]);
         }
 
         user.FirstName = request.FirstName.Trim();
         user.LastName = request.LastName.Trim();
         user.Email = email;
-        user.PhoneNumber = phone;
         user.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);

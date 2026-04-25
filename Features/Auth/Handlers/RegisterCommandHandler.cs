@@ -4,11 +4,8 @@ using Qash.API.Common.Responses;
 using Qash.API.Domain.Entities;
 using Qash.API.Features.Auth.Commands;
 using Qash.API.Features.Auth.DTOs;
-using Qash.API.Infrastructure.Authentication;
 using Qash.API.Infrastructure.Data;
 using Qash.API.Infrastructure.Services;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Qash.API.Features.Auth.Handlers;
 
@@ -16,16 +13,13 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, ApiRespon
 {
     private readonly ApplicationDbContext _context;
     private readonly IPasswordHasherService _passwordHasherService;
-    private readonly IJwtTokenService _jwtTokenService;
 
     public RegisterCommandHandler(
         ApplicationDbContext context,
-        IPasswordHasherService passwordHasherService,
-        IJwtTokenService jwtTokenService)
+        IPasswordHasherService passwordHasherService)
     {
         _context = context;
         _passwordHasherService = passwordHasherService;
-        _jwtTokenService = jwtTokenService;
     }
 
     public async Task<ApiResponse<AuthResponseDto>> Handle(RegisterCommand request, CancellationToken cancellationToken)
@@ -40,8 +34,8 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, ApiRespon
         if (exists)
         {
             return ApiResponse<AuthResponseDto>.FailResponse(
-                "Registration failed",
-                ["Email or phone number already exists"]);
+                "Registration failed.",
+                ["Email or phone number already exists."]);
         }
 
         var user = new ApplicationUser
@@ -50,17 +44,9 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, ApiRespon
             LastName = request.LastName.Trim(),
             Email = email,
             PhoneNumber = phone,
+            IsPhoneNumberVerified = false,
             PasswordHash = _passwordHasherService.HashPassword(request.Password)
         };
-
-        var tokenResult = _jwtTokenService.GenerateTokens(user);
-
-        user.RefreshTokens.Add(new RefreshToken
-        {
-            Token = tokenResult.RefreshToken,
-            ExpiresAt = tokenResult.RefreshTokenExpiresAt,
-            ApplicationUserId = user.Id
-        });
 
         await _context.Users.AddAsync(user, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
@@ -74,9 +60,9 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, ApiRespon
                 FullName = user.FullName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                AccessToken = tokenResult.AccessToken,
-                RefreshToken = tokenResult.RefreshToken
+                AccessToken = string.Empty,
+                RefreshToken = string.Empty
             },
-            "Registration completed successfully");
+            "Registration completed successfully. Please verify your phone number using code 00000.");
     }
 }

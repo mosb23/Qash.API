@@ -73,12 +73,12 @@ Qash.API/
 ### Authentication
 
 - Register
-- Login (Phone Number)
+- Phone Verification
+- Login
 - Refresh Token
 - Logout
 - Forgot Password
 - Change Password
-- Phone Verification (Demo OTP)
 
 ### Profile
 
@@ -90,17 +90,17 @@ Qash.API/
 
 ## 🔐 Authentication Flow
 
-- JWT Access Token
-- Refresh Token stored in database
-- Token rotation
-- Logout revokes refresh token
-- Protected APIs via Bearer Token
+1. User registers account using personal information.
+2. Account is created with unverified phone number.
+3. User verifies phone number using OTP code.
+4. User logs in after successful verification.
+5. JWT + Refresh Token issued.
 
 ---
 
-## 📲 Demo OTP Code
+## 📲 Demo OTP
 
-For academic/demo use:
+For development / academic use:
 
 ```text
 00000
@@ -108,11 +108,11 @@ For academic/demo use:
 
 Used in:
 
-- Register verification
+- Phone verification
 - Forgot password
 - Change password
 
-In production, replace with SMS provider.
+> In production, OTP should be sent through Firebase / Twilio / SMS provider.
 
 ---
 
@@ -168,6 +168,7 @@ http://localhost:xxxx/swagger
 | Method | Endpoint |
 | --- | --- |
 | POST | `/api/auth/register` |
+| POST | `/api/auth/verify-phone` |
 | POST | `/api/auth/login` |
 | POST | `/api/auth/refresh-token` |
 | POST | `/api/auth/logout` |
@@ -193,11 +194,25 @@ http://localhost:xxxx/swagger
   "lastName": "Ahmed",
   "email": "mohamed@gmail.com",
   "phoneNumber": "01028239305",
-  "verificationCode": "00000",
   "password": "Password123",
   "confirmPassword": "Password123"
 }
 ```
+
+## 📄 Verify Phone Request
+
+```json
+{
+  "phoneNumber": "01028239305",
+  "verificationCode": "00000"
+}
+```
+
+### Verify Phone
+
+`POST /api/auth/verify-phone`
+
+---
 
 ## 📄 Sample Login Request
 

@@ -17,6 +17,13 @@ public class AuthController : ControllerBase
         _mediator = mediator;
     }
 
+    [HttpPost("verify-phone")]
+    public async Task<IActionResult> VerifyPhone([FromBody] VerifyPhoneCommand command)
+    {
+        var response = await _mediator.Send(command);
+        return response.Success ? Ok(response) : BadRequest(response);
+    }
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterCommand command)
     {
