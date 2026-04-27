@@ -19,6 +19,10 @@ public class ApplicationUser : BaseEntity
 
     public List<RefreshToken> RefreshTokens { get; set; } = [];
 
+    public List<Wallet> Wallets { get; set; } = [];
+
+    public List<Transaction> Transactions { get; set; } = [];
+
     public string FullName => $"{FirstName} {LastName}";
 
 }
