@@ -16,6 +16,8 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Wallet> Wallets => Set<Wallet>();
+    public DbSet<Transaction> Transactions => Set<Transaction>();
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -108,6 +110,74 @@ public class ApplicationDbContext : DbContext
                 .WithMany(x => x.RefreshTokens)
                 .HasForeignKey(x => x.ApplicationUserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        modelBuilder.Entity<Wallet>(entity =>
+        {
+            entity.ToTable("Wallets");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Name)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(x => x.Currency)
+                .IsRequired()
+                .HasMaxLength(10);
+
+            entity.Property(x => x.Balance)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.HasOne(x => x.ApplicationUser)
+                .WithMany(x => x.Wallets)
+                .HasForeignKey(x => x.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.ApplicationUserId, x.Name });
+
+            entity.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        modelBuilder.Entity<Transaction>(entity =>
+        {
+            entity.ToTable("Transactions");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.TransactionType)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            entity.Property(x => x.Amount)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.Property(x => x.Category)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(x => x.Description)
+                .HasMaxLength(500);
+
+            entity.Property(x => x.TransactionDate)
+                .IsRequired();
+
+            entity.HasOne(x => x.Wallet)
+                .WithMany(x => x.Transactions)
+                .HasForeignKey(x => x.WalletId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.ApplicationUser)
+                .WithMany(x => x.Transactions)
+                .HasForeignKey(x => x.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.ApplicationUserId, x.TransactionDate });
+            entity.HasIndex(x => new { x.WalletId, x.TransactionDate });
 
             entity.HasQueryFilter(x => !x.IsDeleted);
         });
