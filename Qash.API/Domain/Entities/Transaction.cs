@@ -1,5 +1,5 @@
 using Qash.API.Domain.Common;
-using System;
+using Qash.API.Domain.Enums;
 
 namespace Qash.API.Domain.Entities;
 
@@ -13,11 +13,13 @@ public class Transaction : BaseEntity
 
     public ApplicationUser ApplicationUser { get; set; } = null!;
 
-    public string TransactionType { get; set; } = string.Empty;
+    public CategoryType TransactionType { get; set; }
 
     public decimal Amount { get; set; }
 
-    public string Category { get; set; } = string.Empty;
+    public Guid CategoryId { get; set; }
+
+    public Category Category { get; set; } = null!;
 
     public string Description { get; set; } = string.Empty;
 

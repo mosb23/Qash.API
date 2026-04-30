@@ -1,12 +1,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Qash.API.Common.Responses;
-using Qash.API.Domain.Entities;
+using Qash.API.Domain.Enums;
 using Qash.API.Features.Transactions.Commands;
 using Qash.API.Infrastructure.Data;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 using WalletEntity = Qash.API.Domain.Entities.Wallet;
 
@@ -25,24 +22,33 @@ public class DeleteTransactionCommandHandler : IRequestHandler<DeleteTransaction
     {
         var transaction = await _context.Transactions
             .Include(x => x.Wallet)
-            .FirstOrDefaultAsync(x => x.Id == request.TransactionId && x.ApplicationUserId == request.UserId, cancellationToken);
+            .FirstOrDefaultAsync(
+                x => x.Id == request.TransactionId && x.ApplicationUserId == request.UserId,
+                cancellationToken);
 
         if (transaction is null)
         {
-            return ApiResponse<string>.FailResponse("Delete transaction failed.", ["Transaction was not found."]);
+            return ApiResponse<string>.FailResponse(
+                "Delete transaction failed.",
+                ["Transaction was not found."]);
         }
 
         ReverseEffect(transaction.Wallet, transaction.TransactionType, transaction.Amount);
 
-        _context.Transactions.Remove(transaction);
+        transaction.IsDeleted = true;
+        transaction.DeletedAt = DateTime.UtcNow;
+        transaction.UpdatedAt = DateTime.UtcNow;
+
         await _context.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<string>.SuccessResponse("Transaction deleted", "Transaction deleted successfully.");
+        return ApiResponse<string>.SuccessResponse(
+            "Transaction deleted",
+            "Transaction deleted successfully.");
     }
 
-    private static void ReverseEffect(WalletEntity wallet, string transactionType, decimal amount)
+    private static void ReverseEffect(WalletEntity wallet, CategoryType transactionType, decimal amount)
     {
-        if (transactionType.Trim().Equals("Income", StringComparison.OrdinalIgnoreCase))
+        if (transactionType == CategoryType.Income)
         {
             wallet.Balance -= amount;
             return;

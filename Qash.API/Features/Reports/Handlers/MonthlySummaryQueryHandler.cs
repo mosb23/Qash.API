@@ -6,6 +6,7 @@ using Qash.API.Infrastructure.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Qash.API.Domain.Enums;
 
 namespace Qash.API.Features.Reports.Handlers;
 
@@ -27,11 +28,11 @@ public class MonthlySummaryQueryHandler : IRequestHandler<MonthlySummaryQuery, M
             .ToListAsync(cancellationToken);
 
         var totalIncome = transactions
-            .Where(x => x.TransactionType == "Income")
+            .Where(x => x.TransactionType == CategoryType.Income)
             .Sum(x => x.Amount);
 
         var totalExpenses = transactions
-            .Where(x => x.TransactionType == "Expense")
+            .Where(x => x.TransactionType == CategoryType.Expense)
             .Sum(x => x.Amount);
 
         return new MonthlySummaryDto

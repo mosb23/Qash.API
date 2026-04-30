@@ -78,6 +78,51 @@ namespace Qash.API.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("Qash.API.Domain.Entities.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId", "Name", "Type")
+                        .IsUnique();
+
+                    b.ToTable("Categories", (string)null);
+                });
+
             modelBuilder.Entity("Qash.API.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -126,16 +171,13 @@ namespace Qash.API.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("ApplicationUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -154,10 +196,8 @@ namespace Qash.API.Migrations
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("TransactionType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -167,9 +207,11 @@ namespace Qash.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationUserId", "TransactionDate");
+                    b.HasIndex("ApplicationUserId");
 
-                    b.HasIndex("WalletId", "TransactionDate");
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("WalletId");
 
                     b.ToTable("Transactions", (string)null);
                 });
@@ -216,6 +258,17 @@ namespace Qash.API.Migrations
                     b.ToTable("Wallets", (string)null);
                 });
 
+            modelBuilder.Entity("Qash.API.Domain.Entities.Category", b =>
+                {
+                    b.HasOne("Qash.API.Domain.Entities.ApplicationUser", "ApplicationUser")
+                        .WithMany("Categories")
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+                });
+
             modelBuilder.Entity("Qash.API.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("Qash.API.Domain.Entities.ApplicationUser", "ApplicationUser")
@@ -235,6 +288,12 @@ namespace Qash.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Qash.API.Domain.Entities.Category", "Category")
+                        .WithMany("Transactions")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Qash.API.Domain.Entities.Wallet", "Wallet")
                         .WithMany("Transactions")
                         .HasForeignKey("WalletId")
@@ -242,6 +301,8 @@ namespace Qash.API.Migrations
                         .IsRequired();
 
                     b.Navigation("ApplicationUser");
+
+                    b.Navigation("Category");
 
                     b.Navigation("Wallet");
                 });
@@ -259,11 +320,18 @@ namespace Qash.API.Migrations
 
             modelBuilder.Entity("Qash.API.Domain.Entities.ApplicationUser", b =>
                 {
+                    b.Navigation("Categories");
+
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("Transactions");
 
                     b.Navigation("Wallets");
+                });
+
+            modelBuilder.Entity("Qash.API.Domain.Entities.Category", b =>
+                {
+                    b.Navigation("Transactions");
                 });
 
             modelBuilder.Entity("Qash.API.Domain.Entities.Wallet", b =>

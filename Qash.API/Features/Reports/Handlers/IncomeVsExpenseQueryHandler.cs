@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Qash.API.Domain.Enums;
 
 namespace Qash.API.Features.Reports.Handlers;
 
@@ -33,8 +34,8 @@ public class IncomeVsExpenseQueryHandler : IRequestHandler<IncomeVsExpenseQuery,
                 group => group.Key,
                 group => new
                 {
-                    Income = group.Where(x => x.TransactionType == "Income").Sum(x => x.Amount),
-                    Expenses = group.Where(x => x.TransactionType == "Expense").Sum(x => x.Amount)
+                    Income = group.Where(x => x.TransactionType == CategoryType.Income).Sum(x => x.Amount),
+                    Expenses = group.Where(x => x.TransactionType == CategoryType.Expense).Sum(x => x.Amount)
                 });
 
         var result = new List<IncomeVsExpenseDto>(12);

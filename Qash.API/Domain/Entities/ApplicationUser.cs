@@ -23,6 +23,8 @@ public class ApplicationUser : BaseEntity
 
     public List<Transaction> Transactions { get; set; } = [];
 
+    public List<Category> Categories { get; set; } = [];
+
     public string FullName => $"{FirstName} {LastName}";
 
 }

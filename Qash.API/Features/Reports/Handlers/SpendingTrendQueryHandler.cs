@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Qash.API.Domain.Enums;
 
 namespace Qash.API.Features.Reports.Handlers;
 
@@ -28,7 +29,7 @@ public class SpendingTrendQueryHandler : IRequestHandler<SpendingTrendQuery, Lis
         var transactions = await _context.Transactions
             .AsNoTracking()
             .Where(x => x.ApplicationUserId == request.UserId)
-            .Where(x => x.TransactionType == "Expense")
+            .Where(x => x.TransactionType == CategoryType.Expense)
             .Where(x => x.TransactionDate >= startDate && x.TransactionDate < endDate.AddDays(1))
             .ToListAsync(cancellationToken);
 

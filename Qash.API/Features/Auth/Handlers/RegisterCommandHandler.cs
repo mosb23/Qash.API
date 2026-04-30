@@ -6,6 +6,7 @@ using Qash.API.Features.Auth.Commands;
 using Qash.API.Features.Auth.DTOs;
 using Qash.API.Infrastructure.Data;
 using Qash.API.Infrastructure.Services;
+using Qash.API.Domain.Enums;
 
 namespace Qash.API.Features.Auth.Handlers;
 
@@ -49,6 +50,8 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, ApiRespon
         };
 
         await _context.Users.AddAsync(user, cancellationToken);
+        var defaultCategories = GetDefaultCategories(user.Id);
+        await _context.Categories.AddRangeAsync(defaultCategories, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<AuthResponseDto>.SuccessResponse(
@@ -64,5 +67,26 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, ApiRespon
                 RefreshToken = string.Empty
             },
             "Registration completed successfully. Please verify your phone number using code 00000.");
+    }
+
+    private List<Category> GetDefaultCategories(Guid userId)
+    {
+        return new List<Category>
+    {
+        // Expense
+        new() { Name = "Food", Type = CategoryType.Expense, ApplicationUserId = userId },
+        new() { Name = "Transport", Type = CategoryType.Expense, ApplicationUserId = userId },
+        new() { Name = "Shopping", Type = CategoryType.Expense, ApplicationUserId = userId },
+        new() { Name = "Bills", Type = CategoryType.Expense, ApplicationUserId = userId },
+        new() { Name = "Health", Type = CategoryType.Expense, ApplicationUserId = userId },
+        new() { Name = "Education", Type = CategoryType.Expense, ApplicationUserId = userId },
+        new() { Name = "Entertainment", Type = CategoryType.Expense, ApplicationUserId = userId },
+
+        // Income
+        new() { Name = "Salary", Type = CategoryType.Income, ApplicationUserId = userId },
+        new() { Name = "Freelance", Type = CategoryType.Income, ApplicationUserId = userId },
+        new() { Name = "Gift", Type = CategoryType.Income, ApplicationUserId = userId },
+        new() { Name = "Other", Type = CategoryType.Income, ApplicationUserId = userId }
+    };
     }
 }

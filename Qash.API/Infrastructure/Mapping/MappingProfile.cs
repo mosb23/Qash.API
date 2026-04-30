@@ -4,6 +4,7 @@ using Qash.API.Features.Auth.DTOs;
 using Qash.API.Features.Profile.DTOs;
 using Qash.API.Features.Transactions.DTOs;
 using Qash.API.Features.Wallet.DTOs;
+using Qash.API.Features.Categories.DTOs;
 
 using TransactionEntity = Qash.API.Domain.Entities.Transaction;
 using TransactionDtoModel = Qash.API.Features.Transactions.DTOs.TransactionDto;
@@ -31,5 +32,7 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.WalletId, opt => opt.MapFrom(src => src.WalletId))
             .ForMember(dest => dest.WalletName, opt => opt.MapFrom(src => src.Wallet.Name))
             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.ApplicationUserId));
+
+        CreateMap<Category, CategoryDto>();
     }
 }

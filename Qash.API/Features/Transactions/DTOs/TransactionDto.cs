@@ -1,4 +1,6 @@
 using System;
+using Qash.API.Domain.Enums;
+
 
 namespace Qash.API.Features.Transactions.DTOs;
 
@@ -14,9 +16,11 @@ public class TransactionDto
 
     public decimal Amount { get; set; }
 
-    public string TransactionType { get; set; } = string.Empty;
+    public CategoryType TransactionType { get; set; }
 
-    public string Category { get; set; } = string.Empty;
+    public Guid CategoryId { get; set; }
+
+    public string CategoryName { get; set; } = string.Empty;
 
     public string Description { get; set; } = string.Empty;
 

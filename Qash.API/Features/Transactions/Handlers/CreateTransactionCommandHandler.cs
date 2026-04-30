@@ -3,12 +3,10 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Qash.API.Common.Responses;
 using Qash.API.Domain.Entities;
+using Qash.API.Domain.Enums;
 using Qash.API.Features.Transactions.Commands;
 using Qash.API.Features.Transactions.DTOs;
 using Qash.API.Infrastructure.Data;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 using WalletEntity = Qash.API.Domain.Entities.Wallet;
 
@@ -28,23 +26,47 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
     public async Task<ApiResponse<TransactionDto>> Handle(CreateTransactionCommand request, CancellationToken cancellationToken)
     {
         var wallet = await _context.Wallets
-            .FirstOrDefaultAsync(x => x.Id == request.WalletId && x.ApplicationUserId == request.UserId, cancellationToken);
+            .FirstOrDefaultAsync(
+                x => x.Id == request.WalletId && x.ApplicationUserId == request.UserId,
+                cancellationToken);
 
         if (wallet is null)
         {
-            return ApiResponse<TransactionDto>.FailResponse("Create transaction failed.", ["Wallet was not found."]);
+            return ApiResponse<TransactionDto>.FailResponse(
+                "Create transaction failed.",
+                ["Wallet was not found."]);
         }
 
-        var normalizedType = NormalizeType(request.TransactionType);
+        var category = await _context.Categories
+            .FirstOrDefaultAsync(
+                x => x.Id == request.CategoryId && x.ApplicationUserId == request.UserId,
+                cancellationToken);
+
+        if (category is null)
+        {
+            return ApiResponse<TransactionDto>.FailResponse(
+                "Create transaction failed.",
+                ["Category was not found."]);
+        }
+
+        if (category.Type != request.TransactionType)
+        {
+            return ApiResponse<TransactionDto>.FailResponse(
+                "Create transaction failed.",
+                ["Category type does not match transaction type."]);
+        }
+
         var transaction = new Transaction
         {
             ApplicationUserId = request.UserId,
             WalletId = wallet.Id,
+            CategoryId = category.Id,
             Amount = request.Amount,
-            TransactionType = normalizedType,
-            Category = request.Category.Trim(),
+            TransactionType = request.TransactionType,
             Description = request.Description.Trim(),
-            TransactionDate = request.TransactionDate == default ? DateTime.UtcNow : request.TransactionDate
+            TransactionDate = request.TransactionDate == default
+                ? DateTime.UtcNow
+                : request.TransactionDate
         };
 
         ApplyEffect(wallet, transaction.TransactionType, transaction.Amount);
@@ -53,22 +75,18 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
         await _context.SaveChangesAsync(cancellationToken);
 
         await _context.Entry(transaction).Reference(x => x.Wallet).LoadAsync(cancellationToken);
+        await _context.Entry(transaction).Reference(x => x.Category).LoadAsync(cancellationToken);
 
         var dto = _mapper.Map<TransactionDto>(transaction);
 
-        return ApiResponse<TransactionDto>.SuccessResponse(dto, "Transaction created successfully.");
+        return ApiResponse<TransactionDto>.SuccessResponse(
+            dto,
+            "Transaction created successfully.");
     }
 
-    private static string NormalizeType(string transactionType)
+    private static void ApplyEffect(WalletEntity wallet, CategoryType transactionType, decimal amount)
     {
-        return transactionType.Trim().Equals("Income", StringComparison.OrdinalIgnoreCase)
-            ? "Income"
-            : "Expense";
-    }
-
-    private static void ApplyEffect(WalletEntity wallet, string transactionType, decimal amount)
-    {
-        if (transactionType.Equals("Income", StringComparison.OrdinalIgnoreCase))
+        if (transactionType == CategoryType.Income)
         {
             wallet.Balance += amount;
             return;

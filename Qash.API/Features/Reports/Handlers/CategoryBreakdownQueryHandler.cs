@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Qash.API.Domain.Enums;
 
 namespace Qash.API.Features.Reports.Handlers;
 
@@ -24,9 +25,9 @@ public class CategoryBreakdownQueryHandler : IRequestHandler<CategoryBreakdownQu
         return await _context.Transactions
             .AsNoTracking()
             .Where(x => x.ApplicationUserId == request.UserId)
-            .Where(x => x.TransactionType == "Expense")
+            .Where(x => x.TransactionType == CategoryType.Expense)
             .Where(x => x.TransactionDate.Year == request.Year && x.TransactionDate.Month == request.Month)
-            .GroupBy(x => x.Category)
+            .GroupBy(x => x.Category.Name)
             .Select(group => new CategoryBreakdownDto
             {
                 CategoryId = group.Key,
