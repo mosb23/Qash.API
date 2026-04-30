@@ -1,0 +1,53 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Qash.API.Common.Responses;
+using Qash.API.Domain.Entities;
+using Qash.API.Features.Transactions.Commands;
+using Qash.API.Infrastructure.Data;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+using WalletEntity = Qash.API.Domain.Entities.Wallet;
+
+namespace Qash.API.Features.Transactions.Handlers;
+
+public class DeleteTransactionCommandHandler : IRequestHandler<DeleteTransactionCommand, ApiResponse<string>>
+{
+    private readonly ApplicationDbContext _context;
+
+    public DeleteTransactionCommandHandler(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<ApiResponse<string>> Handle(DeleteTransactionCommand request, CancellationToken cancellationToken)
+    {
+        var transaction = await _context.Transactions
+            .Include(x => x.Wallet)
+            .FirstOrDefaultAsync(x => x.Id == request.TransactionId && x.ApplicationUserId == request.UserId, cancellationToken);
+
+        if (transaction is null)
+        {
+            return ApiResponse<string>.FailResponse("Delete transaction failed.", ["Transaction was not found."]);
+        }
+
+        ReverseEffect(transaction.Wallet, transaction.TransactionType, transaction.Amount);
+
+        _context.Transactions.Remove(transaction);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return ApiResponse<string>.SuccessResponse("Transaction deleted", "Transaction deleted successfully.");
+    }
+
+    private static void ReverseEffect(WalletEntity wallet, string transactionType, decimal amount)
+    {
+        if (transactionType.Trim().Equals("Income", StringComparison.OrdinalIgnoreCase))
+        {
+            wallet.Balance -= amount;
+            return;
+        }
+
+        wallet.Balance += amount;
+    }
+}
