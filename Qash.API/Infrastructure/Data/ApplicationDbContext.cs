@@ -19,6 +19,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Wallet> Wallets => Set<Wallet>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<SavingGoal> SavingGoals => Set<SavingGoal>();
+    public DbSet<RecurringTransaction> RecurringTransactions => Set<RecurringTransaction>();
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -206,6 +209,103 @@ public class ApplicationDbContext : DbContext
 
             entity.HasIndex(x => new { x.ApplicationUserId, x.Name, x.Type })
                 .IsUnique();
+
+            entity.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        modelBuilder.Entity<Budget>(entity =>
+        {
+            entity.ToTable("Budgets");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Amount)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.HasOne(x => x.ApplicationUser)
+                .WithMany()
+                .HasForeignKey(x => x.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Category)
+                .WithMany()
+                .HasForeignKey(x => x.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => new { x.ApplicationUserId, x.CategoryId, x.Year, x.Month })
+                .IsUnique();
+
+            entity.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        modelBuilder.Entity<SavingGoal>(entity =>
+        {
+            entity.ToTable("SavingGoals");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Name)
+                .IsRequired()
+                .HasMaxLength(150);
+
+            entity.Property(x => x.TargetAmount)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.Property(x => x.CurrentAmount)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.Property(x => x.Deadline)
+                .IsRequired();
+
+            entity.HasOne(x => x.ApplicationUser)
+                .WithMany()
+                .HasForeignKey(x => x.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        modelBuilder.Entity<RecurringTransaction>(entity =>
+        {
+            entity.ToTable("RecurringTransactions");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Amount)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.Property(x => x.Description)
+                .HasMaxLength(500);
+
+            entity.Property(x => x.TransactionType)
+                .IsRequired();
+
+            entity.Property(x => x.Frequency)
+                .IsRequired();
+
+            entity.Property(x => x.NextRunAt)
+                .IsRequired();
+
+            entity.HasOne(x => x.ApplicationUser)
+                .WithMany()
+                .HasForeignKey(x => x.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Wallet)
+                .WithMany()
+                .HasForeignKey(x => x.WalletId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.Category)
+                .WithMany()
+                .HasForeignKey(x => x.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => new { x.IsActive, x.NextRunAt });
 
             entity.HasQueryFilter(x => !x.IsDeleted);
         });

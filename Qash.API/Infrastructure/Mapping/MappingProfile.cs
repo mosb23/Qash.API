@@ -5,9 +5,14 @@ using Qash.API.Features.Profile.DTOs;
 using Qash.API.Features.Transactions.DTOs;
 using Qash.API.Features.Wallet.DTOs;
 using Qash.API.Features.Categories.DTOs;
+using Qash.API.Features.Budgets.DTOs;
+using Qash.API.Features.SavingGoals.DTOs;
+using Qash.API.Features.RecurringTransactions.DTOs;
 
 using TransactionEntity = Qash.API.Domain.Entities.Transaction;
 using TransactionDtoModel = Qash.API.Features.Transactions.DTOs.TransactionDto;
+using RecurringTransactionEntity = Qash.API.Domain.Entities.RecurringTransaction;
+using RecurringTransactionDtoModel = Qash.API.Features.RecurringTransactions.DTOs.RecurringTransactionDto;
 
 namespace Qash.API.Infrastructure.Mapping;
 
@@ -34,5 +39,23 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.ApplicationUserId));
 
         CreateMap<Category, CategoryDto>();
+
+        CreateMap<Budget, BudgetDto>()
+            .ForMember(dest => dest.BudgetId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name));
+
+        CreateMap<SavingGoal, SavingGoalDto>()
+            .ForMember(dest => dest.SavingGoalId, opt => opt.MapFrom(src => src.Id))
+            .AfterMap((src, dest) =>
+            {
+                dest.ProgressPercent = src.TargetAmount <= 0
+                    ? 0
+                    : Math.Min(100, Math.Round(src.CurrentAmount / src.TargetAmount * 100m, 2));
+            });
+
+        CreateMap<RecurringTransactionEntity, RecurringTransactionDtoModel>()
+            .ForMember(dest => dest.RecurringTransactionId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.WalletName, opt => opt.MapFrom(src => src.Wallet.Name))
+            .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name));
     }
 }

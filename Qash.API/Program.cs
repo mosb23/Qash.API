@@ -8,8 +8,12 @@ using Microsoft.OpenApi.Models;
 using Qash.API.Infrastructure.Data;
 using Qash.API.Infrastructure.Authentication;
 using Qash.API.Infrastructure.Services;
+using Qash.API.Infrastructure.Background;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.AddControllers();
 
@@ -31,6 +35,8 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"))
 
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
+
+builder.Services.AddHostedService<RecurringTransactionsBackgroundService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"];
 

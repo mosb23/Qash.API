@@ -22,19 +22,22 @@ public class ReportController : ControllerBase
     private readonly IValidator<CategoryBreakdownQuery> _categoryBreakdownValidator;
     private readonly IValidator<IncomeVsExpenseQuery> _incomeVsExpenseValidator;
     private readonly IValidator<SpendingTrendQuery> _spendingTrendValidator;
+    private readonly IValidator<DateRangeSummaryQuery> _dateRangeSummaryValidator;
 
     public ReportController(
         IMediator mediator,
         IValidator<MonthlySummaryQuery> monthlySummaryValidator,
         IValidator<CategoryBreakdownQuery> categoryBreakdownValidator,
         IValidator<IncomeVsExpenseQuery> incomeVsExpenseValidator,
-        IValidator<SpendingTrendQuery> spendingTrendValidator)
+        IValidator<SpendingTrendQuery> spendingTrendValidator,
+        IValidator<DateRangeSummaryQuery> dateRangeSummaryValidator)
     {
         _mediator = mediator;
         _monthlySummaryValidator = monthlySummaryValidator;
         _categoryBreakdownValidator = categoryBreakdownValidator;
         _incomeVsExpenseValidator = incomeVsExpenseValidator;
         _spendingTrendValidator = spendingTrendValidator;
+        _dateRangeSummaryValidator = dateRangeSummaryValidator;
     }
 
     [HttpGet("monthly-summary")]
@@ -101,6 +104,24 @@ public class ReportController : ControllerBase
 
         var query = new SpendingTrendQuery(userId.Value, days);
         var validationErrors = await ValidateAsync(query, _spendingTrendValidator);
+
+        if (validationErrors is not null)
+            return BadRequest(validationErrors);
+
+        var result = await _mediator.Send(query);
+        return Ok(result);
+    }
+
+    [HttpGet("date-range-summary")]
+    public async Task<IActionResult> GetDateRangeSummary([FromQuery] DateTime fromUtc, [FromQuery] DateTime toUtc)
+    {
+        var userId = GetCurrentUserId();
+
+        if (userId is null)
+            return Unauthorized();
+
+        var query = new DateRangeSummaryQuery(userId.Value, fromUtc, toUtc);
+        var validationErrors = await ValidateAsync(query, _dateRangeSummaryValidator);
 
         if (validationErrors is not null)
             return BadRequest(validationErrors);
